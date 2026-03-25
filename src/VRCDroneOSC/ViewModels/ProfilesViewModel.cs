@@ -135,18 +135,25 @@ public partial class ProfilesViewModel : ObservableObject
         if (_main.Config.Profiles.Count <= 1) return; // prevent deleting last profile
         if (!_main.Config.Profiles.ContainsKey(SelectedProfileName)) return;
 
-        _main.Config.Profiles.Remove(SelectedProfileName);
-        ProfileNames.Remove(SelectedProfileName);
+        var deletedName = SelectedProfileName;
+
+        // Clear selection before removing to avoid stale binding references
+        SelectedProfileName = "";
+
+        _main.Config.Profiles.Remove(deletedName);
+        ProfileNames.Remove(deletedName);
 
         // If we deleted the active profile, switch to the first remaining one
-        if (ActiveProfileName == SelectedProfileName)
+        if (ActiveProfileName == deletedName && _main.Config.Profiles.Count > 0)
         {
             var first = _main.Config.Profiles.Keys.First();
             _main.SwitchProfile(first);
             ActiveProfileName = first;
         }
 
-        SelectedProfileName = _main.Config.Profiles.Keys.First();
+        if (_main.Config.Profiles.Count > 0)
+            SelectedProfileName = _main.Config.Profiles.Keys.First();
+
         _main.SaveConfig();
         UpdateSummary();
     }

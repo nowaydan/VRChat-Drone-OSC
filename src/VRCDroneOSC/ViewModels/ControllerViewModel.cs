@@ -13,10 +13,13 @@ public partial class ControllerViewModel : ObservableObject
     [ObservableProperty] private string _controllerName = "Not Connected";
     [ObservableProperty] private bool _controllerConnected;
     [ObservableProperty] private ObservableCollection<ControllerBinding> _bindings = new();
+    [ObservableProperty] private ObservableCollection<string> _availableControllers = new();
+    [ObservableProperty] private int _selectedControllerIndex = -1;
 
     public ControllerViewModel(MainViewModel main)
     {
         _main = main;
+        RefreshControllerList();
         RefreshStatus();
         LoadBindings();
 
@@ -40,10 +43,48 @@ public partial class ControllerViewModel : ObservableObject
             Bindings.Add(b);
     }
 
+    public void RefreshControllerList()
+    {
+        var controllers = _main.InputManager.GetAvailableControllers();
+        AvailableControllers.Clear();
+        foreach (var name in controllers)
+            AvailableControllers.Add(name);
+
+        // Pre-select the currently connected controller if there is one
+        if (_main.ControllerConnected && AvailableControllers.Count > 0)
+        {
+            // Try to match by name first
+            int matchIdx = -1;
+            for (int i = 0; i < AvailableControllers.Count; i++)
+            {
+                if (AvailableControllers[i] == _main.ControllerName)
+                {
+                    matchIdx = i;
+                    break;
+                }
+            }
+            SelectedControllerIndex = matchIdx >= 0 ? matchIdx : 0;
+        }
+        else
+        {
+            SelectedControllerIndex = -1;
+        }
+    }
+
+    partial void OnSelectedControllerIndexChanged(int value)
+    {
+        if (value >= 0)
+            _main.InputManager.OpenController(value);
+    }
+
     [RelayCommand]
     private void RefreshController()
     {
-        _main.InputManager.DetectController();
+        RefreshControllerList();
+        if (SelectedControllerIndex < 0 && AvailableControllers.Count == 0)
+        {
+            _main.InputManager.DetectController();
+        }
         RefreshStatus();
     }
 

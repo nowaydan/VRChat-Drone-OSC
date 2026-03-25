@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Silk.NET.SDL;
 using VRCDroneOSC.Models;
@@ -48,6 +49,78 @@ public unsafe class InputManager : IDisposable
             Name = "InputManager.PollLoop"
         };
         _pollThread.Start();
+    }
+
+    /// <summary>
+    /// Returns a list of all available joystick/controller names detected by SDL.
+    /// </summary>
+    public List<string> GetAvailableControllers()
+    {
+        if (_sdl == null) return new List<string>();
+        var list = new List<string>();
+        int count = _sdl.NumJoysticks();
+        for (int i = 0; i < count; i++)
+        {
+            string name = _sdl.JoystickNameForIndexS(i) ?? $"Controller {i}";
+            list.Add(name);
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// Opens the joystick at the specified index (0-based) and updates controller state.
+    /// </summary>
+    public void OpenController(int index)
+    {
+        if (_sdl == null) return;
+
+        lock (_lock)
+        {
+            // Close existing joystick if open
+            if (_joystick != null)
+            {
+                _sdl.JoystickClose(_joystick);
+                _joystick = null;
+            }
+
+            int count = _sdl.NumJoysticks();
+            if (index < 0 || index >= count)
+            {
+                _axes = Array.Empty<short>();
+                _buttons = Array.Empty<byte>();
+                ControllerInfo.Name = "Not Connected";
+                ControllerInfo.IsConnected = false;
+                ControllerInfo.AxisCount = 0;
+                ControllerInfo.ButtonCount = 0;
+            }
+            else
+            {
+                _joystick = _sdl.JoystickOpen(index);
+                if (_joystick == null)
+                {
+                    ControllerInfo.Name = "Not Connected";
+                    ControllerInfo.IsConnected = false;
+                    ControllerInfo.AxisCount = 0;
+                    ControllerInfo.ButtonCount = 0;
+                }
+                else
+                {
+                    int axisCount = _sdl.JoystickNumAxes(_joystick);
+                    int buttonCount = _sdl.JoystickNumButtons(_joystick);
+                    string name = _sdl.JoystickNameForIndexS(index) ?? $"Controller {index}";
+
+                    _axes = new short[axisCount > 0 ? axisCount : 0];
+                    _buttons = new byte[buttonCount > 0 ? buttonCount : 0];
+
+                    ControllerInfo.Name = name;
+                    ControllerInfo.IsConnected = true;
+                    ControllerInfo.AxisCount = axisCount;
+                    ControllerInfo.ButtonCount = buttonCount;
+                }
+            }
+        }
+
+        ControllerChanged?.Invoke(ControllerInfo);
     }
 
     public void DetectController()

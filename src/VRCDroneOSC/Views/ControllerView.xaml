@@ -6,6 +6,17 @@
 
     <UserControl.Resources>
         <conv:BoolToColorConverter x:Key="BoolToColor"/>
+
+        <!-- ComboBox style to match dark theme -->
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="{StaticResource BgPanelBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="12">
@@ -26,18 +37,36 @@
                 Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Connection indicator -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
                     <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
                              Fill="{Binding ControllerConnected, Converter={StaticResource BoolToColor}}"/>
-                    <TextBlock Text="Controller: " Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding ControllerName}"/>
+                    <TextBlock Text="Controller:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <Button Grid.Column="1"
+                <!-- Controller ComboBox -->
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding AvailableControllers}"
+                          SelectedIndex="{Binding SelectedControllerIndex, Mode=TwoWay}"
+                          VerticalAlignment="Center"
+                          Margin="0,0,8,0">
+                    <ComboBox.Style>
+                        <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding AvailableControllers.Count}" Value="0">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ComboBox.Style>
+                </ComboBox>
+
+                <Button Grid.Column="2"
                         Content="Refresh"
                         Command="{Binding RefreshControllerCommand}"
                         Padding="12,5"/>
