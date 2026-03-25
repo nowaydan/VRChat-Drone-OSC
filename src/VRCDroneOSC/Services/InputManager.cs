@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Silk.NET.SDL;
 using VRCDroneOSC.Models;
@@ -14,8 +16,67 @@ public class ControllerInfo
     public int ButtonCount { get; set; }
 }
 
+/// <summary>
+/// Represents a device discovered either via SDL or the Windows Multimedia Joystick API (winmm).
+/// </summary>
+public class DeviceEntry
+{
+    public string Name { get; set; } = "";
+    /// <summary>SDL joystick index, or -1 if this device was found via winmm only.</summary>
+    public int SdlIndex { get; set; } = -1;
+    /// <summary>True if this device came from SDL enumeration (and can be opened as a joystick).</summary>
+    public bool IsSdlDevice { get; set; }
+    /// <summary>winmm joystick ID, or -1 if not a winmm device.</summary>
+    public int WinmmId { get; set; } = -1;
+}
+
 public unsafe class InputManager : IDisposable
 {
+    // --- winmm P/Invoke declarations ---
+    [DllImport("winmm.dll", EntryPoint = "joyGetNumDevs")]
+    private static extern uint JoyGetNumDevs();
+
+    [DllImport("winmm.dll", EntryPoint = "joyGetDevCapsW", CharSet = CharSet.Unicode)]
+    private static extern uint JoyGetDevCaps(uint uJoyID, ref JOYCAPSW pjc, uint cbjc);
+
+    [DllImport("winmm.dll", EntryPoint = "joyGetPosEx")]
+    private static extern uint JoyGetPosEx(uint uJoyID, ref JOYINFOEX pji);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct JOYCAPSW
+    {
+        public ushort wMid;
+        public ushort wPid;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szPname;
+        public uint wXmin, wXmax, wYmin, wYmax, wZmin, wZmax;
+        public uint wNumButtons;
+        public uint wPeriodMin, wPeriodMax;
+        public uint wRmin, wRmax, wUmin, wUmax, wVmin, wVmax;
+        public uint wCaps;
+        public uint wMaxAxes, wNumAxes, wMaxButtons;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szRegKey;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szOEMVxD;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JOYINFOEX
+    {
+        public uint dwSize;
+        public uint dwFlags;
+        public uint dwXpos, dwYpos, dwZpos;
+        public uint dwRpos, dwUpos, dwVpos;
+        public uint dwButtons;
+        public uint dwButtonNumber;
+        public uint dwPOV;
+        public uint dwReserved1, dwReserved2;
+    }
+
+    private const uint JOYERR_NOERROR = 0;
+    private const uint JOY_RETURNALL = 0xFF;
+
     private Sdl? _sdl;
     private Joystick* _joystick;
     private System.Threading.Thread? _pollThread;
@@ -26,6 +87,9 @@ public unsafe class InputManager : IDisposable
     private short[] _axes = Array.Empty<short>();
     private byte[] _buttons = Array.Empty<byte>();
 
+    // Last enumerated device list (kept in sync with GetAvailableDevices)
+    private List<DeviceEntry> _lastDeviceList = new();
+
     public ControllerInfo ControllerInfo { get; } = new();
     public event Action<ControllerInfo>? ControllerChanged;
 
@@ -34,11 +98,24 @@ public unsafe class InputManager : IDisposable
         try
         {
             _sdl = Sdl.GetApi();
-            _sdl.Init(Sdl.InitJoystick);
+            // Initialise both Joystick and GameController subsystems.
+            // GameController is a superset that also handles HID gamepads
+            // that SDL wouldn't enumerate as plain joysticks.
+            // InitEvents is required for SDL_PumpEvents / SDL_JoystickUpdate.
+            int result = _sdl.Init(Sdl.InitJoystick | Sdl.InitGamecontroller | Sdl.InitEvents);
+            if (result != 0)
+            {
+                Debug.WriteLine($"[InputManager] SDL_Init failed with code {result}: {_sdl.GetErrorS()}");
+            }
+            else
+            {
+                Debug.WriteLine("[InputManager] SDL initialised OK");
+            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // SDL not available — controller will show as disconnected
+            Debug.WriteLine($"[InputManager] SDL init exception: {ex.Message}");
             _sdl = null;
         }
 
@@ -52,23 +129,145 @@ public unsafe class InputManager : IDisposable
     }
 
     /// <summary>
-    /// Returns a list of all available joystick/controller names detected by SDL.
+    /// Returns a list of controller/joystick names detected by SDL.
+    /// Calls JoystickUpdate first to ensure the device list is current.
     /// </summary>
     public List<string> GetAvailableControllers()
     {
         if (_sdl == null) return new List<string>();
+
+        // Pump events so SDL refreshes its internal device list
+        _sdl.JoystickUpdate();
+
         var list = new List<string>();
         int count = _sdl.NumJoysticks();
+        Debug.WriteLine($"[InputManager] SDL NumJoysticks = {count}");
         for (int i = 0; i < count; i++)
         {
             string name = _sdl.JoystickNameForIndexS(i) ?? $"Controller {i}";
             list.Add(name);
+            Debug.WriteLine($"[InputManager]   [{i}] {name}");
         }
         return list;
     }
 
     /// <summary>
-    /// Opens the joystick at the specified index (0-based) and updates controller state.
+    /// Returns a combined list of devices from SDL joystick enumeration
+    /// plus the Windows Multimedia Joystick API (winmm).  SDL devices appear first,
+    /// followed by any winmm-only joysticks not already covered by SDL.
+    /// Deduplicates by name so the same physical device isn't listed twice.
+    /// </summary>
+    public List<DeviceEntry> GetAvailableDevices()
+    {
+        var devices = new List<DeviceEntry>();
+        var nameSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // --- SDL devices ---
+        if (_sdl != null)
+        {
+            _sdl.JoystickUpdate();
+            int count = _sdl.NumJoysticks();
+            Debug.WriteLine($"[InputManager] SDL NumJoysticks = {count}");
+            for (int i = 0; i < count; i++)
+            {
+                string name = _sdl.JoystickNameForIndexS(i) ?? $"Controller {i}";
+                devices.Add(new DeviceEntry { Name = name, SdlIndex = i, IsSdlDevice = true });
+                nameSet.Add(name);
+                Debug.WriteLine($"[InputManager]   SDL [{i}] {name}");
+            }
+        }
+
+        // --- winmm Joystick API fallback ---
+        try
+        {
+            uint numDevs = JoyGetNumDevs();
+            Debug.WriteLine($"[InputManager] winmm JoyGetNumDevs = {numDevs}");
+            for (uint id = 0; id < numDevs; id++)
+            {
+                // Check if a joystick is actually connected at this ID
+                var info = new JOYINFOEX
+                {
+                    dwSize = (uint)Marshal.SizeOf<JOYINFOEX>(),
+                    dwFlags = JOY_RETURNALL
+                };
+                uint result = JoyGetPosEx(id, ref info);
+                if (result != JOYERR_NOERROR) continue;
+
+                // Device is connected — get its capabilities and name
+                var caps = new JOYCAPSW();
+                uint capsResult = JoyGetDevCaps(id, ref caps, (uint)Marshal.SizeOf<JOYCAPSW>());
+                if (capsResult != JOYERR_NOERROR) continue;
+
+                string name = GetFullJoystickName(caps);
+                if (string.IsNullOrWhiteSpace(name))
+                    name = $"Joystick {id}";
+
+                // Deduplicate: skip if SDL already found a device with the same name
+                if (nameSet.Contains(name))
+                {
+                    Debug.WriteLine($"[InputManager]   winmm [{id}] {name} (duplicate of SDL, skipped)");
+                    continue;
+                }
+
+                devices.Add(new DeviceEntry { Name = name, SdlIndex = -1, IsSdlDevice = false, WinmmId = (int)id });
+                nameSet.Add(name);
+                Debug.WriteLine($"[InputManager]   winmm [{id}] {name}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[InputManager] winmm joystick enumeration failed: {ex.Message}");
+        }
+
+        _lastDeviceList = devices;
+        return devices;
+    }
+
+    /// <summary>
+    /// Attempts to retrieve the full product name for a winmm joystick by reading
+    /// the OEMName value from the registry.  Falls back to the truncated szPname
+    /// (32-char limit) if the registry lookup fails.
+    /// </summary>
+    private string GetFullJoystickName(JOYCAPSW caps)
+    {
+        string shortName = caps.szPname?.Trim() ?? "";
+
+        // Try to get full name from registry
+        try
+        {
+            string regKey = caps.szRegKey?.Trim() ?? "";
+            if (!string.IsNullOrEmpty(regKey))
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    $@"System\CurrentControlSet\Control\MediaProperties\PrivateProperties\Joystick\OEM\{regKey}");
+                if (key != null)
+                {
+                    string? oemName = key.GetValue("OEMName") as string;
+                    if (!string.IsNullOrEmpty(oemName))
+                        return oemName;
+                }
+
+                // Try HKLM as fallback
+                using var lmKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                    $@"SYSTEM\CurrentControlSet\Control\MediaProperties\PrivateProperties\Joystick\OEM\{regKey}");
+                if (lmKey != null)
+                {
+                    string? oemName = lmKey.GetValue("OEMName") as string;
+                    if (!string.IsNullOrEmpty(oemName))
+                        return oemName;
+                }
+            }
+        }
+        catch
+        {
+            // Registry access may fail — fall through to short name
+        }
+
+        return shortName;
+    }
+
+    /// <summary>
+    /// Opens the joystick at the specified SDL index (0-based) and updates controller state.
     /// </summary>
     public void OpenController(int index)
     {
@@ -82,6 +281,9 @@ public unsafe class InputManager : IDisposable
                 _sdl.JoystickClose(_joystick);
                 _joystick = null;
             }
+
+            // Pump events before querying count
+            _sdl.JoystickUpdate();
 
             int count = _sdl.NumJoysticks();
             if (index < 0 || index >= count)
@@ -98,6 +300,8 @@ public unsafe class InputManager : IDisposable
                 _joystick = _sdl.JoystickOpen(index);
                 if (_joystick == null)
                 {
+                    string err = _sdl.GetErrorS() ?? "unknown error";
+                    Debug.WriteLine($"[InputManager] JoystickOpen({index}) failed: {err}");
                     ControllerInfo.Name = "Not Connected";
                     ControllerInfo.IsConnected = false;
                     ControllerInfo.AxisCount = 0;
@@ -116,11 +320,57 @@ public unsafe class InputManager : IDisposable
                     ControllerInfo.IsConnected = true;
                     ControllerInfo.AxisCount = axisCount;
                     ControllerInfo.ButtonCount = buttonCount;
+
+                    Debug.WriteLine($"[InputManager] Opened '{name}': {axisCount} axes, {buttonCount} buttons");
                 }
             }
         }
 
         ControllerChanged?.Invoke(ControllerInfo);
+    }
+
+    /// <summary>
+    /// Opens a device selected from the combined device list (by list index).
+    /// If the device is an SDL joystick, opens it directly.
+    /// If it's a winmm-only device, attempts to match it to an SDL joystick by name.
+    /// </summary>
+    public void OpenDeviceByListIndex(int listIndex)
+    {
+        if (listIndex < 0 || listIndex >= _lastDeviceList.Count) return;
+
+        var entry = _lastDeviceList[listIndex];
+        if (entry.IsSdlDevice && entry.SdlIndex >= 0)
+        {
+            OpenController(entry.SdlIndex);
+        }
+        else
+        {
+            // winmm-only device — try to find a matching SDL joystick by name substring
+            if (_sdl != null)
+            {
+                _sdl.JoystickUpdate();
+                int count = _sdl.NumJoysticks();
+                for (int i = 0; i < count; i++)
+                {
+                    string sdlName = _sdl.JoystickNameForIndexS(i) ?? "";
+                    if (entry.Name.Contains(sdlName, StringComparison.OrdinalIgnoreCase) ||
+                        sdlName.Contains(entry.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Debug.WriteLine($"[InputManager] Matched winmm device '{entry.Name}' to SDL [{i}] '{sdlName}'");
+                        OpenController(i);
+                        return;
+                    }
+                }
+            }
+
+            // Could not match to SDL — report as not openable but show correct name
+            Debug.WriteLine($"[InputManager] Device '{entry.Name}' (winmm ID={entry.WinmmId}) has no SDL joystick match");
+            ControllerInfo.Name = $"{entry.Name} (no joystick driver)";
+            ControllerInfo.IsConnected = false;
+            ControllerInfo.AxisCount = 0;
+            ControllerInfo.ButtonCount = 0;
+            ControllerChanged?.Invoke(ControllerInfo);
+        }
     }
 
     public void DetectController()
@@ -136,7 +386,11 @@ public unsafe class InputManager : IDisposable
                 _joystick = null;
             }
 
+            // Pump events so SDL sees recently-connected devices
+            _sdl.JoystickUpdate();
+
             int count = _sdl.NumJoysticks();
+            Debug.WriteLine($"[InputManager] DetectController: NumJoysticks = {count}");
             if (count <= 0)
             {
                 _axes = Array.Empty<short>();
@@ -151,6 +405,8 @@ public unsafe class InputManager : IDisposable
                 _joystick = _sdl.JoystickOpen(0);
                 if (_joystick == null)
                 {
+                    string err = _sdl.GetErrorS() ?? "unknown error";
+                    Debug.WriteLine($"[InputManager] JoystickOpen(0) failed: {err}");
                     ControllerInfo.Name = "Not Connected";
                     ControllerInfo.IsConnected = false;
                     ControllerInfo.AxisCount = 0;
@@ -169,6 +425,8 @@ public unsafe class InputManager : IDisposable
                     ControllerInfo.IsConnected = true;
                     ControllerInfo.AxisCount = axisCount;
                     ControllerInfo.ButtonCount = buttonCount;
+
+                    Debug.WriteLine($"[InputManager] Auto-detected '{name}': {axisCount} axes, {buttonCount} buttons");
                 }
             }
         }
@@ -187,6 +445,9 @@ public unsafe class InputManager : IDisposable
                 lock (_lock)
                 {
                     if (_sdl == null) goto Sleep;
+
+                    // Pump SDL events so joystick hotplug detection works
+                    _sdl.JoystickUpdate();
 
                     // If no joystick open, try to detect one
                     if (_joystick == null)
@@ -230,9 +491,9 @@ public unsafe class InputManager : IDisposable
                 Sleep:
                 System.Threading.Thread.Sleep(2); // ~500 Hz
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Swallow errors in poll loop; will retry on next iteration
+                Debug.WriteLine($"[InputManager] Poll error: {ex.Message}");
                 System.Threading.Thread.Sleep(100);
             }
         }

@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VRCDroneOSC.Models;
+using VRCDroneOSC.Services;
 using VRCDroneOSC.Views;
 
 namespace VRCDroneOSC.ViewModels;
@@ -15,6 +17,10 @@ public partial class ControllerViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<ControllerBinding> _bindings = new();
     [ObservableProperty] private ObservableCollection<string> _availableControllers = new();
     [ObservableProperty] private int _selectedControllerIndex = -1;
+    [ObservableProperty] private bool _deviceListVisible = true;
+
+    // Parallel list of DeviceEntry objects matching AvailableControllers by index
+    private List<DeviceEntry> _deviceEntries = new();
 
     public ControllerViewModel(MainViewModel main)
     {
@@ -45,10 +51,13 @@ public partial class ControllerViewModel : ObservableObject
 
     public void RefreshControllerList()
     {
-        var controllers = _main.InputManager.GetAvailableControllers();
+        // Use the combined SDL + winmm device enumeration
+        _deviceEntries = _main.InputManager.GetAvailableDevices();
         AvailableControllers.Clear();
-        foreach (var name in controllers)
-            AvailableControllers.Add(name);
+        foreach (var entry in _deviceEntries)
+            AvailableControllers.Add(entry.Name);
+
+        Debug.WriteLine($"[ControllerVM] Enumerated {_deviceEntries.Count} devices");
 
         // Pre-select the currently connected controller if there is one
         if (_main.ControllerConnected && AvailableControllers.Count > 0)
@@ -73,8 +82,14 @@ public partial class ControllerViewModel : ObservableObject
 
     partial void OnSelectedControllerIndexChanged(int value)
     {
-        if (value >= 0)
-            _main.InputManager.OpenController(value);
+        if (value >= 0 && value < _deviceEntries.Count)
+        {
+            var entry = _deviceEntries[value];
+            Debug.WriteLine($"[ControllerVM] Selected device [{value}]: {entry.Name} (SDL={entry.IsSdlDevice}, idx={entry.SdlIndex})");
+
+            // Use the device-list-aware open method which handles both SDL and WMI devices
+            _main.InputManager.OpenDeviceByListIndex(value);
+        }
     }
 
     [RelayCommand]
@@ -86,6 +101,14 @@ public partial class ControllerViewModel : ObservableObject
             _main.InputManager.DetectController();
         }
         RefreshStatus();
+        // Ensure device list is visible after refresh
+        DeviceListVisible = true;
+    }
+
+    [RelayCommand]
+    private void ToggleDeviceList()
+    {
+        DeviceListVisible = !DeviceListVisible;
     }
 
     [RelayCommand]
