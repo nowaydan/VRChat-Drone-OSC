@@ -1,0 +1,37 @@
+{
+  "controllerName": "",
+  "lastOpenedPage": 0,
+  "activeProfile": "Default",
+  "profiles": {
+    "Default": {
+      "throttleRate": {
+        "mid": 0,
+        "expo": 0
+      },
+      "pitchRate": {
+        "center": 200,
+        "maxRate": 0,
+        "expo": 0
+      },
+      "rollRate": {
+        "center": 0,
+        "maxRate": 0,
+        "expo": 0
+      },
+      "yawRate": {
+        "center": 0,
+        "maxRate": 0,
+        "expo": 0
+      },
+      "physics": {
+        "mass": 0.5,
+        "linearDrag": 2,
+        "angularDrag": 5,
+        "gravity": 9.81,
+        "hoverThrottle": 0.5,
+        "thrustMultiplier": 1
+      },
+      "controllerBindings": []
+    }
+  }
+}

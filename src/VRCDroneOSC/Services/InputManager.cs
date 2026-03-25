@@ -106,10 +106,11 @@ public unsafe class InputManager : IDisposable
         try
         {
             _sdl = Sdl.GetApi();
-            // Initialise both Joystick and GameController subsystems.
-            // GameController is a superset that also handles HID gamepads
-            // that SDL wouldn't enumerate as plain joysticks.
-            // InitEvents is required for SDL_PumpEvents / SDL_JoystickUpdate.
+
+            // Set hints before init for better device detection
+            _sdl.SetHint("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1");
+            _sdl.SetHint("SDL_HINT_JOYSTICK_RAWINPUT", "1");
+
             int result = _sdl.Init(Sdl.InitJoystick | Sdl.InitGamecontroller | Sdl.InitEvents);
             if (result != 0)
             {
@@ -118,11 +119,17 @@ public unsafe class InputManager : IDisposable
             else
             {
                 Debug.WriteLine("[InputManager] SDL initialised OK");
+                // Pump events immediately to populate device list
+                _sdl.PumpEvents();
+                _sdl.JoystickUpdate();
+                int count = _sdl.NumJoysticks();
+                Debug.WriteLine($"[InputManager] Initial SDL NumJoysticks = {count}");
+                for (int i = 0; i < count; i++)
+                    Debug.WriteLine($"[InputManager]   SDL[{i}] = {_sdl.JoystickNameForIndexS(i)}");
             }
         }
         catch (Exception ex)
         {
-            // SDL not available — controller will show as disconnected
             Debug.WriteLine($"[InputManager] SDL init exception: {ex.Message}");
             _sdl = null;
         }
@@ -308,6 +315,7 @@ public unsafe class InputManager : IDisposable
     private int TryMatchSdlJoystick(string name)
     {
         if (_sdl == null) return -1;
+        _sdl.PumpEvents();
         _sdl.JoystickUpdate();
         int count = _sdl.NumJoysticks();
         for (int i = 0; i < count; i++)
@@ -395,38 +403,113 @@ public unsafe class InputManager : IDisposable
         if (listIndex < 0 || listIndex >= _lastDeviceList.Count) return;
 
         var entry = _lastDeviceList[listIndex];
+
+        // Strategy 1: If already matched to SDL, open directly
         if (entry.IsSdlDevice && entry.SdlIndex >= 0)
         {
             OpenController(entry.SdlIndex);
+            return;
         }
-        else
+
+        if (_sdl == null) goto NotFound;
+
+        // Strategy 2: Pump events aggressively and re-scan
+        _sdl.PumpEvents();
+        _sdl.JoystickUpdate();
+        System.Threading.Thread.Sleep(50); // Give SDL a moment
+        _sdl.PumpEvents();
+        _sdl.JoystickUpdate();
+
+        int count = _sdl.NumJoysticks();
+        Debug.WriteLine($"[InputManager] OpenDevice: SDL sees {count} joysticks after pump");
+
+        // Strategy 3: Try name matching against all SDL joysticks
+        for (int i = 0; i < count; i++)
         {
-            // Non-SDL device — try to find a matching SDL joystick by name substring
-            if (_sdl != null)
+            string sdlName = _sdl.JoystickNameForIndexS(i) ?? "";
+            Debug.WriteLine($"[InputManager]   SDL[{i}] = '{sdlName}'");
+            if (!string.IsNullOrEmpty(sdlName) && (
+                entry.Name.Contains(sdlName, StringComparison.OrdinalIgnoreCase) ||
+                sdlName.Contains(entry.Name, StringComparison.OrdinalIgnoreCase)))
             {
-                _sdl.JoystickUpdate();
-                int count = _sdl.NumJoysticks();
-                for (int i = 0; i < count; i++)
+                Debug.WriteLine($"[InputManager] Name-matched '{entry.Name}' → SDL[{i}] '{sdlName}'");
+                OpenController(i);
+                return;
+            }
+        }
+
+        // Strategy 4: If SDL has exactly 1 joystick, assume it's the one the user selected
+        // (common case: only one controller plugged in)
+        if (count == 1)
+        {
+            Debug.WriteLine($"[InputManager] Only 1 SDL joystick — assuming it's '{entry.Name}'");
+            OpenController(0);
+            return;
+        }
+
+        // Strategy 5: If SDL has any joysticks and the device path suggests it's a game controller,
+        // try opening each one and check if it has axes (a real joystick)
+        if (count > 1)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                OpenController(i);
+                if (ControllerInfo.IsConnected && ControllerInfo.AxisCount > 0)
                 {
-                    string sdlName = _sdl.JoystickNameForIndexS(i) ?? "";
-                    if (entry.Name.Contains(sdlName, StringComparison.OrdinalIgnoreCase) ||
-                        sdlName.Contains(entry.Name, StringComparison.OrdinalIgnoreCase))
+                    Debug.WriteLine($"[InputManager] Found joystick with axes at SDL[{i}]");
+                    // Update the display name to what the user selected
+                    ControllerInfo.Name = entry.Name;
+                    ControllerChanged?.Invoke(ControllerInfo);
+                    return;
+                }
+            }
+        }
+
+        // Strategy 6: Force-try opening SDL indices 0-15 even if NumJoysticks said 0
+        // Some SDL builds on Windows don't enumerate properly but can still open
+        if (count == 0)
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                lock (_lock)
+                {
+                    if (_joystick != null)
                     {
-                        Debug.WriteLine($"[InputManager] Matched device '{entry.Name}' to SDL [{i}] '{sdlName}'");
-                        OpenController(i);
-                        return;
+                        _sdl.JoystickClose(_joystick);
+                        _joystick = null;
+                    }
+
+                    var js = _sdl.JoystickOpen(i);
+                    if (js != null)
+                    {
+                        int axes = _sdl.JoystickNumAxes(js);
+                        int buttons = _sdl.JoystickNumButtons(js);
+                        if (axes > 0 || buttons > 0)
+                        {
+                            _joystick = js;
+                            _axes = new short[axes > 0 ? axes : 0];
+                            _buttons = new byte[buttons > 0 ? buttons : 0];
+                            ControllerInfo.Name = entry.Name;
+                            ControllerInfo.IsConnected = true;
+                            ControllerInfo.AxisCount = axes;
+                            ControllerInfo.ButtonCount = buttons;
+                            Debug.WriteLine($"[InputManager] Force-opened SDL[{i}]: {axes} axes, {buttons} buttons");
+                            ControllerChanged?.Invoke(ControllerInfo);
+                            return;
+                        }
+                        _sdl.JoystickClose(js);
                     }
                 }
             }
-
-            // Could not match to SDL — report as not openable but show correct name
-            Debug.WriteLine($"[InputManager] Device '{entry.Name}' has no SDL joystick match");
-            ControllerInfo.Name = $"{entry.Name} (no joystick driver)";
-            ControllerInfo.IsConnected = false;
-            ControllerInfo.AxisCount = 0;
-            ControllerInfo.ButtonCount = 0;
-            ControllerChanged?.Invoke(ControllerInfo);
         }
+
+        NotFound:
+        Debug.WriteLine($"[InputManager] Device '{entry.Name}' could not be opened via SDL");
+        ControllerInfo.Name = entry.Name;
+        ControllerInfo.IsConnected = false;
+        ControllerInfo.AxisCount = 0;
+        ControllerInfo.ButtonCount = 0;
+        ControllerChanged?.Invoke(ControllerInfo);
     }
 
     public void DetectController()
