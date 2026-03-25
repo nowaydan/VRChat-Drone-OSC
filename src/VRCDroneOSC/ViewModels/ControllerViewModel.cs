@@ -11,6 +11,7 @@ namespace VRCDroneOSC.ViewModels;
 public partial class ControllerViewModel : ObservableObject
 {
     private readonly MainViewModel _main;
+    private bool _suppressSelectionHandler;
 
     [ObservableProperty] private string _controllerName = "Not Connected";
     [ObservableProperty] private bool _controllerConnected;
@@ -18,7 +19,6 @@ public partial class ControllerViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<string> _availableControllers = new();
     [ObservableProperty] private int _selectedControllerIndex = -1;
 
-    // Parallel list of DeviceEntry objects matching AvailableControllers by index
     private List<DeviceEntry> _deviceEntries = new();
 
     public ControllerViewModel(MainViewModel main)
@@ -50,7 +50,8 @@ public partial class ControllerViewModel : ObservableObject
 
     public void RefreshControllerList()
     {
-        // Use the Raw Input + HID API device enumeration
+        _suppressSelectionHandler = true;
+
         _deviceEntries = _main.InputManager.GetAvailableDevices();
         AvailableControllers.Clear();
         foreach (var entry in _deviceEntries)
@@ -58,11 +59,10 @@ public partial class ControllerViewModel : ObservableObject
 
         Debug.WriteLine($"[ControllerVM] Enumerated {_deviceEntries.Count} devices");
 
-        // Pre-select the currently connected controller if there is one
-        if (_main.ControllerConnected && AvailableControllers.Count > 0)
+        // Restore selection to the currently connected controller
+        int matchIdx = -1;
+        if (_main.ControllerConnected)
         {
-            // Try to match by name first
-            int matchIdx = -1;
             for (int i = 0; i < AvailableControllers.Count; i++)
             {
                 if (AvailableControllers[i] == _main.ControllerName)
@@ -71,35 +71,56 @@ public partial class ControllerViewModel : ObservableObject
                     break;
                 }
             }
-            SelectedControllerIndex = matchIdx >= 0 ? matchIdx : 0;
         }
-        else
+
+        // Also try matching by saved controller name in config
+        if (matchIdx < 0 && !string.IsNullOrEmpty(_main.Config.ControllerName))
         {
-            SelectedControllerIndex = -1;
+            for (int i = 0; i < AvailableControllers.Count; i++)
+            {
+                if (AvailableControllers[i] == _main.Config.ControllerName)
+                {
+                    matchIdx = i;
+                    break;
+                }
+            }
         }
+
+        SelectedControllerIndex = matchIdx;
+        _suppressSelectionHandler = false;
     }
 
     partial void OnSelectedControllerIndexChanged(int value)
     {
+        if (_suppressSelectionHandler) return;
         if (value >= 0 && value < _deviceEntries.Count)
         {
             var entry = _deviceEntries[value];
-            Debug.WriteLine($"[ControllerVM] Selected device [{value}]: {entry.Name} (SDL={entry.IsSdlDevice}, idx={entry.SdlIndex})");
+            Debug.WriteLine($"[ControllerVM] Selected device [{value}]: {entry.Name}");
 
-            // Use the device-list-aware open method which handles both SDL and non-SDL devices
             _main.InputManager.OpenDeviceByListIndex(value);
+
+            // Save the selected controller name so it persists
+            _main.Config.ControllerName = entry.Name;
+            _main.SaveConfig();
         }
     }
 
     [RelayCommand]
     private void RefreshController()
     {
+        // Re-scan devices but keep the current connection alive
+        // Only call DetectController if nothing is currently connected
         RefreshControllerList();
-        if (SelectedControllerIndex < 0 && AvailableControllers.Count == 0)
-        {
-            _main.InputManager.DetectController();
-        }
         RefreshStatus();
+
+        // If we found the previously selected controller, re-select it
+        if (SelectedControllerIndex >= 0 && !_main.ControllerConnected)
+        {
+            // Try to connect the selected device
+            _suppressSelectionHandler = false;
+            OnSelectedControllerIndexChanged(SelectedControllerIndex);
+        }
     }
 
     [RelayCommand]

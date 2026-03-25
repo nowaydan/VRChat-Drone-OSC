@@ -17,6 +17,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
     <PackageReference Include="Silk.NET.SDL" Version="2.23.0" />
+    <PackageReference Include="Vortice.DirectInput" Version="3.8.3" />
   </ItemGroup>
 
 </Project>
