@@ -1,6 +1,141 @@
 <UserControl x:Class="VRCDroneOSC.Views.FlightView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VRCDroneOSC.Controls"
+             xmlns:conv="clr-namespace:VRCDroneOSC.Converters"
              Background="{StaticResource BgMediumBrush}">
-    <TextBlock Text="Flight — coming soon" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+    <UserControl.Resources>
+        <conv:BoolToColorConverter x:Key="BoolToColor"/>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <!-- Status bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- Stick widgets + throttle bar -->
+            <RowDefinition Height="*"/>
+            <!-- OSC output values -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── Row 0: Status bar ── -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BgDarkBrush}"
+                CornerRadius="4"
+                Padding="10,6"
+                Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+
+                <!-- Controller status -->
+                <Ellipse Width="10" Height="10" Margin="0,0,6,0" VerticalAlignment="Center"
+                         Fill="{Binding ControllerConnected, Converter={StaticResource BoolToColor}}"/>
+                <TextBlock Text="Controller: " Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock Text="{Binding ControllerStatus}" Margin="0,0,20,0"/>
+
+                <!-- OSC status -->
+                <Ellipse Width="10" Height="10" Margin="0,0,6,0" VerticalAlignment="Center"
+                         Fill="{Binding OscConnected, Converter={StaticResource BoolToColor}}"/>
+                <TextBlock Text="OSC: " Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock Text="{Binding OscStatus}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ── Row 1: Sticks + Throttle ── -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Left stick (Yaw + Throttle) -->
+                <ColumnDefinition Width="*"/>
+                <!-- Throttle bar -->
+                <ColumnDefinition Width="60"/>
+                <!-- Right stick (Roll + Pitch) -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left stick widget -->
+            <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Left — Yaw / Throttle"
+                           HorizontalAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="11"
+                           Margin="0,0,0,4"/>
+                <controls:StickWidget
+                    Width="180" Height="180"
+                    XValue="{Binding StickLeftX}"
+                    YValue="{Binding StickLeftY}"/>
+            </StackPanel>
+
+            <!-- Throttle bar -->
+            <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="THR"
+                           HorizontalAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="11"
+                           Margin="0,0,0,4"/>
+                <controls:ThrottleBar
+                    Width="40" Height="180"
+                    Value="{Binding ThrottlePercent}"/>
+            </StackPanel>
+
+            <!-- Right stick widget -->
+            <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Right — Roll / Pitch"
+                           HorizontalAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="11"
+                           Margin="0,0,0,4"/>
+                <controls:StickWidget
+                    Width="180" Height="180"
+                    XValue="{Binding StickRightX}"
+                    YValue="{Binding StickRightY}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ── Row 2: OSC output values ── -->
+        <Border Grid.Row="2"
+                Background="{StaticResource BgDarkBrush}"
+                CornerRadius="4"
+                Padding="12,8"
+                Margin="0,10,0,0">
+            <UniformGrid Rows="1" Columns="4">
+
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="THROTTLE" FontSize="10"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding ThrottlePercent, StringFormat={}{0:F3}}"
+                               FontSize="16" HorizontalAlignment="Center"
+                               Foreground="{StaticResource AccentBrush}"/>
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="PITCH" FontSize="10"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding PitchOut, StringFormat={}{0:F3}}"
+                               FontSize="16" HorizontalAlignment="Center"
+                               Foreground="{StaticResource AccentBrush}"/>
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="ROLL" FontSize="10"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding RollOut, StringFormat={}{0:F3}}"
+                               FontSize="16" HorizontalAlignment="Center"
+                               Foreground="{StaticResource AccentBrush}"/>
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="YAW" FontSize="10"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding YawOut, StringFormat={}{0:F3}}"
+                               FontSize="16" HorizontalAlignment="Center"
+                               Foreground="{StaticResource AccentBrush}"/>
+                </StackPanel>
+
+            </UniformGrid>
+        </Border>
+    </Grid>
 </UserControl>
