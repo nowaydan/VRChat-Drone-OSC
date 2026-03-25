@@ -34,11 +34,13 @@
             <Grid Grid.Row="0"
                   Background="{StaticResource BgDarkBrush}"
                   MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <TextBlock Text="VRChat Drone OSC"
+                <TextBlock Text="VRCDroneOSC"
                            VerticalAlignment="Center"
                            Margin="14,0,0,0"
-                           FontSize="12"
-                           Foreground="{StaticResource TextSecondaryBrush}"/>
+                           FontSize="16"
+                           FontWeight="Bold"
+                           FontFamily="Segoe UI"
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Stretch">
