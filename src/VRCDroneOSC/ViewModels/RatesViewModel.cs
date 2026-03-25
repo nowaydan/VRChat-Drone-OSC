@@ -8,6 +8,7 @@ public partial class RatesViewModel : ObservableObject
 {
     private readonly MainViewModel _main;
     private readonly DispatcherTimer _uiTimer;
+    private bool _loading;
 
     // Throttle
     [ObservableProperty] private double _throttleMid;
@@ -43,6 +44,7 @@ public partial class RatesViewModel : ObservableObject
 
     private void LoadFromProfile()
     {
+        _loading = true; // Suppress SaveToProfile during load
         var profile = _main.ActiveProfile;
 
         ThrottleMid  = profile.ThrottleRate.Mid;
@@ -59,6 +61,7 @@ public partial class RatesViewModel : ObservableObject
         YawCenter  = profile.YawRate.Center;
         YawMaxRate = profile.YawRate.MaxRate;
         YawExpo    = profile.YawRate.Expo;
+        _loading = false;
     }
 
     private void UpdateLiveInputs()
@@ -74,6 +77,7 @@ public partial class RatesViewModel : ObservableObject
 
     private void SaveToProfile()
     {
+        if (_loading) return;
         var profile = _main.ActiveProfile;
 
         profile.ThrottleRate.Mid  = ThrottleMid;
