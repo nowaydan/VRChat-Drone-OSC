@@ -1,12 +1,17 @@
-﻿<Window x:Class="VRCDroneOSC.MainWindow"
+<Window x:Class="VRCDroneOSC.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:VRCDroneOSC"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-
+        xmlns:views="clr-namespace:VRCDroneOSC.Views"
+        Title="VRChat Drone OSC" Width="960" Height="640"
+        Background="{StaticResource BgDarkBrush}"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="10">
+        <TabControl SelectedIndex="{Binding SelectedTab}">
+            <TabItem Header="Flight"><views:FlightView/></TabItem>
+            <TabItem Header="Rates"><views:RatesView/></TabItem>
+            <TabItem Header="Controller"><views:ControllerView/></TabItem>
+            <TabItem Header="Profiles"><views:ProfilesView/></TabItem>
+            <TabItem Header="Simulator"><views:SimulatorView/></TabItem>
+        </TabControl>
     </Grid>
 </Window>
