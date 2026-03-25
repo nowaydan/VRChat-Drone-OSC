@@ -6,12 +6,15 @@
 
     <UserControl.Resources>
         <conv:BoolToColorConverter x:Key="BoolToColor"/>
+        <conv:NormalizedToWidthConverter x:Key="NormToWidth"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <!-- Controller status header -->
+            <RowDefinition Height="Auto"/>
+            <!-- Debug panel (collapsible) -->
             <RowDefinition Height="Auto"/>
             <!-- Bindings list -->
             <RowDefinition Height="*"/>
@@ -30,6 +33,8 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Connection indicator -->
@@ -46,15 +51,176 @@
                           Margin="4,0,8,0"
                           VerticalAlignment="Center"/>
 
+                <!-- Toggle debug button -->
                 <Button Grid.Column="2"
+                        Padding="12,5"
+                        Command="{Binding ToggleDebugCommand}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Content" Value="Show Inputs"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDebugVisible}" Value="True">
+                                    <Setter Property="Content" Value="Hide Inputs"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Button Grid.Column="4"
                         Content="Refresh"
                         Command="{Binding RefreshControllerCommand}"
                         Padding="12,5"/>
             </Grid>
         </Border>
 
-        <!-- == Row 1: Bindings list == -->
+        <!-- == Row 1: Collapsible live debug panel == -->
         <Border Grid.Row="1"
+                Background="{StaticResource BgDarkBrush}"
+                CornerRadius="4"
+                Padding="12,10"
+                Margin="0,0,0,10"
+                Visibility="{Binding IsDebugVisible, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Axes -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="AXES"
+                               FontSize="10"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="0,0,0,6"
+                               FontWeight="SemiBold"/>
+
+                    <ItemsControl ItemsSource="{Binding AxisValues}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <!-- Label -->
+                                        <ColumnDefinition Width="60"/>
+                                        <!-- Track -->
+                                        <ColumnDefinition Width="*"/>
+                                        <!-- Numeric value -->
+                                        <ColumnDefinition Width="52"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Name}"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"/>
+
+                                    <!-- Track: use a ProgressBar styled dark, value 0..1 -->
+                                    <Grid Grid.Column="1"
+                                          Height="10"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,8,0">
+                                        <!-- Track background -->
+                                        <Border Background="#22FFFFFF" CornerRadius="3"/>
+                                        <!-- Fill — stretches left-to-right proportional to NormalizedValue -->
+                                        <Border Background="{StaticResource AccentBrush}"
+                                                CornerRadius="3"
+                                                HorizontalAlignment="Left">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Width" Value="0"/>
+                                                </Style>
+                                            </Border.Style>
+                                            <!-- We use a Progress-bar trick: bind Width to NormalizedValue * 200 via converter -->
+                                            <Border.Width>
+                                                <Binding Path="NormalizedValue"
+                                                         Converter="{StaticResource NormToWidth}"
+                                                         ConverterParameter="200"/>
+                                            </Border.Width>
+                                        </Border>
+                                    </Grid>
+
+                                    <TextBlock Grid.Column="2"
+                                               FontSize="11"
+                                               FontFamily="Consolas"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Right"
+                                               Text="{Binding Value, StringFormat={}{0:F2}}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- No-controller placeholder -->
+                    <TextBlock Text="No controller connected"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,4">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ControllerConnected}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Buttons -->
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="BUTTONS"
+                               FontSize="10"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="0,0,0,6"
+                               FontWeight="SemiBold"/>
+
+                    <ItemsControl ItemsSource="{Binding ButtonStates}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical"
+                                            Margin="4,2"
+                                            Width="36"
+                                            HorizontalAlignment="Center">
+                                    <!-- Indicator circle -->
+                                    <Ellipse Width="16" Height="16"
+                                             HorizontalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#22FFFFFF"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsPressed}" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <!-- Button index label -->
+                                    <TextBlock Text="{Binding Index}"
+                                               FontSize="9"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- == Row 2: Bindings list == -->
+        <Border Grid.Row="2"
                 Background="{StaticResource BgPanelBrush}"
                 CornerRadius="4"
                 Padding="0">
@@ -132,8 +298,8 @@
             </Grid>
         </Border>
 
-        <!-- == Row 2: Add binding button == -->
-        <Button Grid.Row="2"
+        <!-- == Row 3: Add binding button == -->
+        <Button Grid.Row="3"
                 Content="+ Create New Binding"
                 Style="{StaticResource AccentButton}"
                 HorizontalAlignment="Left"

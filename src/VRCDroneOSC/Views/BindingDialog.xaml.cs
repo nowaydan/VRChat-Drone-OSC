@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using VRCDroneOSC.Models;
 
 namespace VRCDroneOSC.Views;
@@ -42,6 +43,16 @@ public partial class BindingDialog : Window
         if (CmbBehavior.SelectedIndex < 0)  CmbBehavior.SelectedIndex = 0;
     }
 
+    // ─── Title bar handlers ───────────────────────────────────────────────
+
+    private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount == 1)
+            DragMove();
+    }
+
+    // ─── Helper ───────────────────────────────────────────────────────────
+
     private static void SelectComboByTag(ComboBox combo, string tag)
     {
         foreach (ComboBoxItem item in combo.Items)
@@ -53,6 +64,8 @@ public partial class BindingDialog : Window
             }
         }
     }
+
+    // ─── Button handlers ──────────────────────────────────────────────────
 
     private void SaveClick(object sender, RoutedEventArgs e)
     {

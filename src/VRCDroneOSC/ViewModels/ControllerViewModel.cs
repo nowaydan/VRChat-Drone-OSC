@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VRCDroneOSC.Models;
@@ -8,16 +9,44 @@ using VRCDroneOSC.Views;
 
 namespace VRCDroneOSC.ViewModels;
 
+// ─── Display models for live debug panel ────────────────────────────────────
+
+public partial class AxisDisplay : ObservableObject
+{
+    [ObservableProperty] private string _name = "";
+    [ObservableProperty] private double _value;
+
+    // Normalized to 0..1 for ProgressBar width
+    public double NormalizedValue => (Value + 1.0) / 2.0;
+
+    partial void OnValueChanged(double value)
+        => OnPropertyChanged(nameof(NormalizedValue));
+}
+
+public partial class ButtonDisplay : ObservableObject
+{
+    [ObservableProperty] private int _index;
+    [ObservableProperty] private bool _isPressed;
+}
+
+// ─── ControllerViewModel ─────────────────────────────────────────────────────
+
 public partial class ControllerViewModel : ObservableObject
 {
     private readonly MainViewModel _main;
     private bool _suppressSelectionHandler;
+    private DispatcherTimer? _debugTimer;
 
     [ObservableProperty] private string _controllerName = "Not Connected";
     [ObservableProperty] private bool _controllerConnected;
     [ObservableProperty] private ObservableCollection<ControllerBinding> _bindings = new();
     [ObservableProperty] private ObservableCollection<string> _availableControllers = new();
     [ObservableProperty] private int _selectedControllerIndex = -1;
+
+    // Debug panel
+    [ObservableProperty] private ObservableCollection<AxisDisplay> _axisValues = new();
+    [ObservableProperty] private ObservableCollection<ButtonDisplay> _buttonStates = new();
+    [ObservableProperty] private bool _isDebugVisible;
 
     private List<DeviceEntry> _deviceEntries = new();
 
@@ -32,8 +61,50 @@ public partial class ControllerViewModel : ObservableObject
         {
             ControllerName = info.IsConnected ? info.Name : "Not Connected";
             ControllerConnected = info.IsConnected;
+            RebuildDebugCollections(info);
         };
+
+        // Initialize collections for whatever is already connected
+        RebuildDebugCollections(_main.InputManager.ControllerInfo);
+
+        // 30 fps debug timer
+        _debugTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
+        _debugTimer.Tick += OnDebugTick;
+        _debugTimer.Start();
     }
+
+    // ─── Debug panel helpers ──────────────────────────────────────────────
+
+    private void RebuildDebugCollections(ControllerInfo info)
+    {
+        AxisValues.Clear();
+        ButtonStates.Clear();
+
+        if (!info.IsConnected) return;
+
+        for (int i = 0; i < info.AxisCount; i++)
+            AxisValues.Add(new AxisDisplay { Name = $"Axis {i}" });
+
+        for (int i = 0; i < info.ButtonCount; i++)
+            ButtonStates.Add(new ButtonDisplay { Index = i });
+    }
+
+    private void OnDebugTick(object? sender, EventArgs e)
+    {
+        if (!IsDebugVisible) return;
+
+        var im = _main.InputManager;
+        for (int i = 0; i < AxisValues.Count; i++)
+            AxisValues[i].Value = im.GetAxisValue(i);
+
+        for (int i = 0; i < ButtonStates.Count; i++)
+            ButtonStates[i].IsPressed = im.GetButtonValue(i);
+    }
+
+    [RelayCommand]
+    private void ToggleDebug() => IsDebugVisible = !IsDebugVisible;
+
+    // ─── Controller list / status ─────────────────────────────────────────
 
     private void RefreshStatus()
     {
