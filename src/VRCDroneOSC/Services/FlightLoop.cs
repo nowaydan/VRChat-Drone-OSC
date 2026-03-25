@@ -85,15 +85,19 @@ public class FlightLoop : IDisposable
             {
                 double raw = _input.GetControlValue(control);
                 raw = InputNormalizer.ApplyDeadzone(raw, 0.02);
-                double normalized = InputNormalizer.Normalize(raw, control.NormalizeMethod);
 
                 switch (binding.ParameterAddress)
                 {
-                    case "/avatar/parameters/DroneThrottle": rawThrottle = normalized; break;
-                    case "/avatar/parameters/DronePitch": rawPitch = normalized; break;
-                    case "/avatar/parameters/DroneRoll": rawRoll = normalized; break;
-                    case "/avatar/parameters/DroneYaw": rawYaw = normalized; break;
+                    // Flight axes: use raw value (-1..1). The rate curves
+                    // (ApplyThrottle / Apply) handle conversion to output range.
+                    // Using the normalized value here would double-convert.
+                    case "/avatar/parameters/DroneThrottle": rawThrottle = raw; break;
+                    case "/avatar/parameters/DronePitch": rawPitch = raw; break;
+                    case "/avatar/parameters/DroneRoll": rawRoll = raw; break;
+                    case "/avatar/parameters/DroneYaw": rawYaw = raw; break;
                     default:
+                        // Non-flight bindings: apply the binding's normalization
+                        double normalized = InputNormalizer.Normalize(raw, control.NormalizeMethod);
                         _osc.QueueValue(binding.ParameterAddress, (float)normalized);
                         break;
                 }
