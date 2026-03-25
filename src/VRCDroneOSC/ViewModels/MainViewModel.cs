@@ -57,7 +57,8 @@ public partial class MainViewModel : ObservableObject
     {
         _inputManager.Start();
         _oscTransport.Start();
-        // FlightLoop will be wired in Task 10
+        FlightLoop = new FlightLoop(_inputManager, _physicsEngine, _oscTransport, () => ActiveProfile);
+        FlightLoop.Start();
     }
 
     public void Stop()
