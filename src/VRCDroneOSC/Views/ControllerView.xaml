@@ -1,6 +1,135 @@
 <UserControl x:Class="VRCDroneOSC.Views.ControllerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:VRCDroneOSC.Converters"
              Background="{StaticResource BgMediumBrush}">
-    <TextBlock Text="Controller — coming soon" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+    <UserControl.Resources>
+        <conv:BoolToColorConverter x:Key="BoolToColor"/>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <!-- Controller status header -->
+            <RowDefinition Height="Auto"/>
+            <!-- Bindings list -->
+            <RowDefinition Height="*"/>
+            <!-- Add binding button -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── Row 0: Controller status ── -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BgDarkBrush}"
+                CornerRadius="4"
+                Padding="12,8"
+                Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
+                             Fill="{Binding ControllerConnected, Converter={StaticResource BoolToColor}}"/>
+                    <TextBlock Text="Controller: " Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="{Binding ControllerName}"/>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Content="Refresh"
+                        Command="{Binding RefreshControllerCommand}"
+                        Padding="12,5"/>
+            </Grid>
+        </Border>
+
+        <!-- ── Row 1: Bindings list ── -->
+        <Border Grid.Row="1"
+                Background="{StaticResource BgPanelBrush}"
+                CornerRadius="4"
+                Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Column header -->
+                <Border Grid.Row="0"
+                        Background="{StaticResource BgDarkBrush}"
+                        CornerRadius="4,4,0,0"
+                        Padding="12,6">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="80"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Name"
+                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="1" Text="Parameter Address"
+                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="2" Text="Actions"
+                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Bindings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="12,8"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding DisplayName}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding ParameterAddress}"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                    HorizontalAlignment="Center">
+                                            <Button Content="Edit"
+                                                    Padding="8,3"
+                                                    Margin="0,0,6,0"
+                                                    Command="{Binding DataContext.EditBindingCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button Content="X"
+                                                    Padding="8,3"
+                                                    Foreground="{StaticResource DangerBrush}"
+                                                    Command="{Binding DataContext.DeleteBindingCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- ── Row 2: Add binding button ── -->
+        <Button Grid.Row="2"
+                Content="+ Create New Binding"
+                Style="{StaticResource AccentButton}"
+                HorizontalAlignment="Left"
+                Margin="0,10,0,0"
+                Command="{Binding AddBindingCommand}"/>
+
+    </Grid>
 </UserControl>

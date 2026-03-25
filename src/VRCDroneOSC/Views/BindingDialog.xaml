@@ -1,0 +1,133 @@
+<Window x:Class="VRCDroneOSC.Views.BindingDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Binding Editor"
+        Width="600" Height="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource BgMediumBrush}"
+        WindowStyle="SingleBorderWindow">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Themes/DarkTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="Edit Binding"
+                   FontSize="16" FontWeight="SemiBold"
+                   Margin="0,0,0,16"/>
+
+        <!-- Form fields -->
+        <Border Grid.Row="1"
+                Background="{StaticResource BgPanelBrush}"
+                CornerRadius="4" Padding="16">
+            <StackPanel>
+
+                <!-- Binding Name -->
+                <TextBlock Text="Binding Name" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,4"/>
+                <TextBox x:Name="TxtName" Margin="0,0,0,14"/>
+
+                <!-- Parameter Address -->
+                <TextBlock Text="Parameter Address" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,4"/>
+                <TextBox x:Name="TxtAddress" Margin="0,0,0,14"/>
+
+                <!-- Controller Input -->
+                <TextBlock Text="Controller Input" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,4"/>
+                <ComboBox x:Name="CmbInput" Margin="0,0,0,14"
+                          Background="{StaticResource BgPanelBrush}"
+                          Foreground="{StaticResource TextPrimaryBrush}"
+                          BorderBrush="{StaticResource BorderBrush}">
+                    <ComboBoxItem Content="Axis 0 (Left X)"   Tag="Axis0"/>
+                    <ComboBoxItem Content="Axis 1 (Left Y)"   Tag="Axis1"/>
+                    <ComboBoxItem Content="Axis 2 (Right X)"  Tag="Axis2"/>
+                    <ComboBoxItem Content="Axis 3 (Right Y)"  Tag="Axis3"/>
+                    <ComboBoxItem Content="Axis 4 (L2)"       Tag="Axis4"/>
+                    <ComboBoxItem Content="Axis 5 (R2)"       Tag="Axis5"/>
+                    <ComboBoxItem Content="Button 0"          Tag="Btn0"/>
+                    <ComboBoxItem Content="Button 1"          Tag="Btn1"/>
+                    <ComboBoxItem Content="Button 2"          Tag="Btn2"/>
+                    <ComboBoxItem Content="Button 3"          Tag="Btn3"/>
+                    <ComboBoxItem Content="Button 4"          Tag="Btn4"/>
+                    <ComboBoxItem Content="Button 5"          Tag="Btn5"/>
+                    <ComboBoxItem Content="Button 6"          Tag="Btn6"/>
+                    <ComboBoxItem Content="Button 7"          Tag="Btn7"/>
+                </ComboBox>
+
+                <!-- Normalization -->
+                <TextBlock Text="Normalization" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,4"/>
+                <ComboBox x:Name="CmbNormalize" Margin="0,0,0,14"
+                          Background="{StaticResource BgPanelBrush}"
+                          Foreground="{StaticResource TextPrimaryBrush}"
+                          BorderBrush="{StaticResource BorderBrush}">
+                    <ComboBoxItem Content="None"            Tag="None"/>
+                    <ComboBoxItem Content="Zero to One"     Tag="ZeroToOne"/>
+                    <ComboBoxItem Content="Minus One to One" Tag="MinusOneToOne"/>
+                    <ComboBoxItem Content="Binary"          Tag="Binary"/>
+                </ComboBox>
+
+                <!-- Behavior -->
+                <TextBlock Text="Behavior" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,4"/>
+                <ComboBox x:Name="CmbBehavior"
+                          Background="{StaticResource BgPanelBrush}"
+                          Foreground="{StaticResource TextPrimaryBrush}"
+                          BorderBrush="{StaticResource BorderBrush}">
+                    <ComboBoxItem Content="Continuous" Tag="Continuous"/>
+                    <ComboBoxItem Content="Toggle"     Tag="Toggle"/>
+                    <ComboBoxItem Content="One Shot"   Tag="OneShot"/>
+                </ComboBox>
+
+            </StackPanel>
+        </Border>
+
+        <!-- Bottom buttons -->
+        <Grid Grid.Row="2" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Validation message -->
+            <TextBlock x:Name="TxtValidation"
+                       Grid.Column="0"
+                       Foreground="{StaticResource DangerBrush}"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       Visibility="Collapsed"/>
+
+            <Button Grid.Column="1"
+                    Content="Save"
+                    Style="{StaticResource AccentButton}"
+                    Width="90"
+                    Click="SaveClick"/>
+
+            <Button Grid.Column="3"
+                    Content="Cancel"
+                    Width="90"
+                    Click="CancelClick"/>
+        </Grid>
+    </Grid>
+</Window>
