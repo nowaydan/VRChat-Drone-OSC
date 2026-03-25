@@ -17,7 +17,6 @@ public partial class ControllerViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<ControllerBinding> _bindings = new();
     [ObservableProperty] private ObservableCollection<string> _availableControllers = new();
     [ObservableProperty] private int _selectedControllerIndex = -1;
-    [ObservableProperty] private bool _deviceListVisible = true;
 
     // Parallel list of DeviceEntry objects matching AvailableControllers by index
     private List<DeviceEntry> _deviceEntries = new();
@@ -51,7 +50,7 @@ public partial class ControllerViewModel : ObservableObject
 
     public void RefreshControllerList()
     {
-        // Use the combined SDL + winmm device enumeration
+        // Use the Raw Input + HID API device enumeration
         _deviceEntries = _main.InputManager.GetAvailableDevices();
         AvailableControllers.Clear();
         foreach (var entry in _deviceEntries)
@@ -87,7 +86,7 @@ public partial class ControllerViewModel : ObservableObject
             var entry = _deviceEntries[value];
             Debug.WriteLine($"[ControllerVM] Selected device [{value}]: {entry.Name} (SDL={entry.IsSdlDevice}, idx={entry.SdlIndex})");
 
-            // Use the device-list-aware open method which handles both SDL and WMI devices
+            // Use the device-list-aware open method which handles both SDL and non-SDL devices
             _main.InputManager.OpenDeviceByListIndex(value);
         }
     }
@@ -101,14 +100,6 @@ public partial class ControllerViewModel : ObservableObject
             _main.InputManager.DetectController();
         }
         RefreshStatus();
-        // Ensure device list is visible after refresh
-        DeviceListVisible = true;
-    }
-
-    [RelayCommand]
-    private void ToggleDeviceList()
-    {
-        DeviceListVisible = !DeviceListVisible;
     }
 
     [RelayCommand]

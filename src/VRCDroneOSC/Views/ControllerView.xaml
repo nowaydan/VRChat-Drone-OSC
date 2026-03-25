@@ -7,57 +7,11 @@
     <UserControl.Resources>
         <conv:BoolToColorConverter x:Key="BoolToColor"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-
-        <!-- Themed ListBoxItem style for the device list -->
-        <Style x:Key="DeviceListBoxItem" TargetType="ListBoxItem">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-            <Setter Property="BorderThickness" Value="3,0,0,0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Bd"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Left"
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BgPanelBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#FF0A2647"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-                            </Trigger>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsSelected" Value="True"/>
-                                    <Condition Property="IsMouseOver" Value="True"/>
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="Bd" Property="Background" Value="#FF0D2D52"/>
-                            </MultiTrigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </UserControl.Resources>
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <!-- Controller status header -->
-            <RowDefinition Height="Auto"/>
-            <!-- Device list -->
             <RowDefinition Height="Auto"/>
             <!-- Bindings list -->
             <RowDefinition Height="*"/>
@@ -70,12 +24,11 @@
                 Background="{StaticResource BgDarkBrush}"
                 CornerRadius="4"
                 Padding="12,8"
-                Margin="0,0,0,2">
+                Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
@@ -86,91 +39,22 @@
                     <TextBlock Text="Controller:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Controller name display -->
-                <TextBlock Grid.Column="1"
-                           Text="{Binding ControllerName}"
-                           VerticalAlignment="Center"
-                           Foreground="{StaticResource TextPrimaryBrush}"
-                           FontSize="13"
-                           TextTrimming="CharacterEllipsis"
-                           Margin="4,0,8,0"/>
+                <!-- Device ComboBox dropdown -->
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding AvailableControllers}"
+                          SelectedIndex="{Binding SelectedControllerIndex}"
+                          Margin="4,0,8,0"
+                          VerticalAlignment="Center"/>
 
-                <!-- Toggle device list button -->
                 <Button Grid.Column="2"
-                        Content="{Binding DeviceListVisible, Converter={x:Static conv:BoolToArrowConverter.Instance}}"
-                        Command="{Binding ToggleDeviceListCommand}"
-                        Padding="10,5"
-                        Margin="0,0,6,0"
-                        ToolTip="Show/hide device list"/>
-
-                <Button Grid.Column="3"
                         Content="Refresh"
                         Command="{Binding RefreshControllerCommand}"
                         Padding="12,5"/>
             </Grid>
         </Border>
 
-        <!-- == Row 1: Device list panel (expandable, shown when DeviceListVisible) == -->
+        <!-- == Row 1: Bindings list == -->
         <Border Grid.Row="1"
-                Background="{StaticResource BgDarkBrush}"
-                CornerRadius="0,0,4,4"
-                Margin="0,0,0,10"
-                Visibility="{Binding DeviceListVisible, Converter={StaticResource BoolToVis}}">
-            <Grid>
-                <!-- Device ListBox (shown when devices exist) -->
-                <ListBox ItemsSource="{Binding AvailableControllers}"
-                         SelectedIndex="{Binding SelectedControllerIndex, Mode=TwoWay}"
-                         ItemContainerStyle="{StaticResource DeviceListBoxItem}"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         Padding="0"
-                         MaxHeight="200"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"
-                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                       FontFamily="Segoe UI"
-                                       FontSize="13"
-                                       TextTrimming="CharacterEllipsis"/>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    <ListBox.Style>
-                        <Style TargetType="ListBox">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding AvailableControllers.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ListBox.Style>
-                </ListBox>
-
-                <!-- No devices message (shown when list is empty) -->
-                <TextBlock Text="No devices detected. Click Refresh to scan."
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           FontSize="12"
-                           FontStyle="Italic"
-                           HorizontalAlignment="Center"
-                           Padding="12,10">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                            <Setter Property="FontFamily" Value="Segoe UI"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding AvailableControllers.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Grid>
-        </Border>
-
-        <!-- == Row 2: Bindings list == -->
-        <Border Grid.Row="2"
                 Background="{StaticResource BgPanelBrush}"
                 CornerRadius="4"
                 Padding="0">
@@ -248,8 +132,8 @@
             </Grid>
         </Border>
 
-        <!-- == Row 3: Add binding button == -->
-        <Button Grid.Row="3"
+        <!-- == Row 2: Add binding button == -->
+        <Button Grid.Row="2"
                 Content="+ Create New Binding"
                 Style="{StaticResource AccentButton}"
                 HorizontalAlignment="Left"

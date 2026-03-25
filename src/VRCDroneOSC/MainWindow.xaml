@@ -8,7 +8,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanResizeWithGrip">
+        ResizeMode="CanResize">
 
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="0"

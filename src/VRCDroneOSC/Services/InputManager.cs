@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
+using Microsoft.Win32.SafeHandles;
 using Silk.NET.SDL;
 using VRCDroneOSC.Models;
 
@@ -17,65 +19,71 @@ public class ControllerInfo
 }
 
 /// <summary>
-/// Represents a device discovered either via SDL or the Windows Multimedia Joystick API (winmm).
+/// Represents a device discovered via the Windows Raw Input API + HID API,
+/// optionally matched to an SDL joystick for axis/button reading.
 /// </summary>
 public class DeviceEntry
 {
     public string Name { get; set; } = "";
-    /// <summary>SDL joystick index, or -1 if this device was found via winmm only.</summary>
+    /// <summary>SDL joystick index, or -1 if no SDL match was found.</summary>
     public int SdlIndex { get; set; } = -1;
-    /// <summary>True if this device came from SDL enumeration (and can be opened as a joystick).</summary>
+    /// <summary>True if this device was matched to an SDL joystick.</summary>
     public bool IsSdlDevice { get; set; }
-    /// <summary>winmm joystick ID, or -1 if not a winmm device.</summary>
-    public int WinmmId { get; set; } = -1;
+    /// <summary>Raw Input device path (e.g. \\?\HID#VID_xxxx&amp;PID_xxxx...).</summary>
+    public string DevicePath { get; set; } = "";
 }
 
 public unsafe class InputManager : IDisposable
 {
-    // --- winmm P/Invoke declarations ---
-    [DllImport("winmm.dll", EntryPoint = "joyGetNumDevs")]
-    private static extern uint JoyGetNumDevs();
+    // --- Raw Input P/Invoke declarations ---
 
-    [DllImport("winmm.dll", EntryPoint = "joyGetDevCapsW", CharSet = CharSet.Unicode)]
-    private static extern uint JoyGetDevCaps(uint uJoyID, ref JOYCAPSW pjc, uint cbjc);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern uint GetRawInputDeviceList(
+        [In, Out] RAWINPUTDEVICELIST[]? pRawInputDeviceList,
+        ref uint puiNumDevices,
+        uint cbSize);
 
-    [DllImport("winmm.dll", EntryPoint = "joyGetPosEx")]
-    private static extern uint JoyGetPosEx(uint uJoyID, ref JOYINFOEX pji);
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern uint GetRawInputDeviceInfoW(
+        IntPtr hDevice,
+        uint uiCommand,
+        IntPtr pData,
+        ref uint pcbSize);
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    private struct JOYCAPSW
-    {
-        public ushort wMid;
-        public ushort wPid;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-        public string szPname;
-        public uint wXmin, wXmax, wYmin, wYmax, wZmin, wZmax;
-        public uint wNumButtons;
-        public uint wPeriodMin, wPeriodMax;
-        public uint wRmin, wRmax, wUmin, wUmax, wVmin, wVmax;
-        public uint wCaps;
-        public uint wMaxAxes, wNumAxes, wMaxButtons;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-        public string szRegKey;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-        public string szOEMVxD;
-    }
+    // --- HID P/Invoke declarations ---
+
+    [DllImport("hid.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool HidD_GetProductString(
+        SafeFileHandle HidDeviceObject,
+        byte[] Buffer,
+        uint BufferLength);
+
+    // --- Kernel32 for opening HID device handles ---
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern SafeFileHandle CreateFileW(
+        string lpFileName,
+        uint dwDesiredAccess,
+        uint dwShareMode,
+        IntPtr lpSecurityAttributes,
+        uint dwCreationDisposition,
+        uint dwFlagsAndAttributes,
+        IntPtr hTemplateFile);
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct JOYINFOEX
+    private struct RAWINPUTDEVICELIST
     {
-        public uint dwSize;
-        public uint dwFlags;
-        public uint dwXpos, dwYpos, dwZpos;
-        public uint dwRpos, dwUpos, dwVpos;
-        public uint dwButtons;
-        public uint dwButtonNumber;
-        public uint dwPOV;
-        public uint dwReserved1, dwReserved2;
+        public IntPtr hDevice;
+        public uint dwType;
     }
 
-    private const uint JOYERR_NOERROR = 0;
-    private const uint JOY_RETURNALL = 0xFF;
+    private const uint RIDI_DEVICENAME = 0x20000007;
+    private const uint RIM_TYPEMOUSE = 0;
+    private const uint RIM_TYPEKEYBOARD = 1;
+    private const uint RIM_TYPEHID = 2;
+    private const uint FILE_SHARE_READ = 1;
+    private const uint FILE_SHARE_WRITE = 2;
+    private const uint OPEN_EXISTING = 3;
 
     private Sdl? _sdl;
     private Joystick* _joystick;
@@ -152,71 +160,74 @@ public unsafe class InputManager : IDisposable
     }
 
     /// <summary>
-    /// Returns a combined list of devices from SDL joystick enumeration
-    /// plus the Windows Multimedia Joystick API (winmm).  SDL devices appear first,
-    /// followed by any winmm-only joysticks not already covered by SDL.
-    /// Deduplicates by name so the same physical device isn't listed twice.
+    /// Enumerates ALL input devices using the Windows Raw Input API and resolves
+    /// friendly names via the HID product string. Each HID device is also matched
+    /// against SDL joysticks so it can be opened for axis/button input.
+    /// Mouse and Keyboard entries are included with generic names (deduplicated).
     /// </summary>
     public List<DeviceEntry> GetAvailableDevices()
     {
         var devices = new List<DeviceEntry>();
         var nameSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // --- SDL devices ---
-        if (_sdl != null)
+        // Step 1: Get Raw Input device list
+        uint deviceCount = 0;
+        uint structSize = (uint)Marshal.SizeOf<RAWINPUTDEVICELIST>();
+        GetRawInputDeviceList(null, ref deviceCount, structSize);
+
+        if (deviceCount == 0)
         {
-            _sdl.JoystickUpdate();
-            int count = _sdl.NumJoysticks();
-            Debug.WriteLine($"[InputManager] SDL NumJoysticks = {count}");
-            for (int i = 0; i < count; i++)
-            {
-                string name = _sdl.JoystickNameForIndexS(i) ?? $"Controller {i}";
-                devices.Add(new DeviceEntry { Name = name, SdlIndex = i, IsSdlDevice = true });
-                nameSet.Add(name);
-                Debug.WriteLine($"[InputManager]   SDL [{i}] {name}");
-            }
+            Debug.WriteLine("[InputManager] Raw Input: 0 devices");
+            _lastDeviceList = devices;
+            return devices;
         }
 
-        // --- winmm Joystick API fallback ---
-        try
+        var rawDevices = new RAWINPUTDEVICELIST[deviceCount];
+        GetRawInputDeviceList(rawDevices, ref deviceCount, structSize);
+        Debug.WriteLine($"[InputManager] Raw Input: {deviceCount} devices");
+
+        for (uint i = 0; i < deviceCount; i++)
         {
-            uint numDevs = JoyGetNumDevs();
-            Debug.WriteLine($"[InputManager] winmm JoyGetNumDevs = {numDevs}");
-            for (uint id = 0; id < numDevs; id++)
+            var rawDev = rawDevices[i];
+
+            // Get device path
+            uint pathSize = 0;
+            GetRawInputDeviceInfoW(rawDev.hDevice, RIDI_DEVICENAME, IntPtr.Zero, ref pathSize);
+            if (pathSize == 0) continue;
+
+            IntPtr pathBuffer = Marshal.AllocHGlobal((int)(pathSize * 2));
+            try
             {
-                // Check if a joystick is actually connected at this ID
-                var info = new JOYINFOEX
-                {
-                    dwSize = (uint)Marshal.SizeOf<JOYINFOEX>(),
-                    dwFlags = JOY_RETURNALL
-                };
-                uint result = JoyGetPosEx(id, ref info);
-                if (result != JOYERR_NOERROR) continue;
+                GetRawInputDeviceInfoW(rawDev.hDevice, RIDI_DEVICENAME, pathBuffer, ref pathSize);
+                string devicePath = Marshal.PtrToStringUni(pathBuffer) ?? "";
 
-                // Device is connected — get its capabilities and name
-                var caps = new JOYCAPSW();
-                uint capsResult = JoyGetDevCaps(id, ref caps, (uint)Marshal.SizeOf<JOYCAPSW>());
-                if (capsResult != JOYERR_NOERROR) continue;
+                // Skip RDP/virtual devices
+                if (devicePath.Contains("RDP_", StringComparison.OrdinalIgnoreCase)) continue;
+                if (devicePath.Contains("VIRTUAL", StringComparison.OrdinalIgnoreCase)) continue;
 
-                string name = GetFullJoystickName(caps);
-                if (string.IsNullOrWhiteSpace(name))
-                    name = $"Joystick {id}";
+                // Get friendly name
+                string name = GetDeviceFriendlyName(devicePath, rawDev.dwType);
 
-                // Deduplicate: skip if SDL already found a device with the same name
-                if (nameSet.Contains(name))
-                {
-                    Debug.WriteLine($"[InputManager]   winmm [{id}] {name} (duplicate of SDL, skipped)");
-                    continue;
-                }
-
-                devices.Add(new DeviceEntry { Name = name, SdlIndex = -1, IsSdlDevice = false, WinmmId = (int)id });
+                if (string.IsNullOrWhiteSpace(name) || nameSet.Contains(name)) continue;
                 nameSet.Add(name);
-                Debug.WriteLine($"[InputManager]   winmm [{id}] {name}");
+
+                // Try to match to SDL joystick
+                int sdlIndex = TryMatchSdlJoystick(name);
+
+                devices.Add(new DeviceEntry
+                {
+                    Name = name,
+                    SdlIndex = sdlIndex,
+                    IsSdlDevice = sdlIndex >= 0,
+                    DevicePath = devicePath
+                });
+
+                Debug.WriteLine($"[InputManager]   [{i}] \"{name}\" SDL={sdlIndex} path={devicePath}");
             }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[InputManager] winmm joystick enumeration failed: {ex.Message}");
+            finally
+            {
+                Marshal.FreeHGlobal(pathBuffer);
+            }
         }
 
         _lastDeviceList = devices;
@@ -224,46 +235,91 @@ public unsafe class InputManager : IDisposable
     }
 
     /// <summary>
-    /// Attempts to retrieve the full product name for a winmm joystick by reading
-    /// the OEMName value from the registry.  Falls back to the truncated szPname
-    /// (32-char limit) if the registry lookup fails.
+    /// Resolves a human-readable device name from a Raw Input device path.
+    /// For HID devices, opens the device handle and reads the USB product string.
+    /// For mice and keyboards, returns generic type names.
     /// </summary>
-    private string GetFullJoystickName(JOYCAPSW caps)
+    private string GetDeviceFriendlyName(string devicePath, uint deviceType)
     {
-        string shortName = caps.szPname?.Trim() ?? "";
-
-        // Try to get full name from registry
-        try
+        // For HID devices, try to read USB product string
+        if (deviceType == RIM_TYPEHID)
         {
-            string regKey = caps.szRegKey?.Trim() ?? "";
-            if (!string.IsNullOrEmpty(regKey))
+            try
             {
-                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                    $@"System\CurrentControlSet\Control\MediaProperties\PrivateProperties\Joystick\OEM\{regKey}");
-                if (key != null)
-                {
-                    string? oemName = key.GetValue("OEMName") as string;
-                    if (!string.IsNullOrEmpty(oemName))
-                        return oemName;
-                }
+                // Open device with sharing for reading
+                using var handle = CreateFileW(
+                    devicePath,
+                    0, // No access rights needed for HidD_GetProductString
+                    FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    IntPtr.Zero,
+                    OPEN_EXISTING,
+                    0,
+                    IntPtr.Zero);
 
-                // Try HKLM as fallback
-                using var lmKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
-                    $@"SYSTEM\CurrentControlSet\Control\MediaProperties\PrivateProperties\Joystick\OEM\{regKey}");
-                if (lmKey != null)
+                if (!handle.IsInvalid)
                 {
-                    string? oemName = lmKey.GetValue("OEMName") as string;
-                    if (!string.IsNullOrEmpty(oemName))
-                        return oemName;
+                    byte[] buffer = new byte[512];
+                    if (HidD_GetProductString(handle, buffer, (uint)buffer.Length))
+                    {
+                        string name = Encoding.Unicode.GetString(buffer).TrimEnd('\0').Trim();
+                        if (!string.IsNullOrEmpty(name))
+                            return name;
+                    }
                 }
             }
-        }
-        catch
-        {
-            // Registry access may fail — fall through to short name
+            catch
+            {
+                // Some devices refuse to open — fall through to path extraction
+            }
+
+            // Fallback: extract something useful from the device path
+            return ExtractNameFromPath(devicePath);
         }
 
-        return shortName;
+        // For mice and keyboards, use generic names (they share paths)
+        if (deviceType == RIM_TYPEMOUSE) return "Mouse";
+        if (deviceType == RIM_TYPEKEYBOARD) return "Keyboard";
+
+        return "";
+    }
+
+    /// <summary>
+    /// Last-resort name extraction from a Raw Input device path.
+    /// Paths look like: \\?\HID#VID_2770&amp;PID_0901&amp;MI_00#...
+    /// </summary>
+    private static string ExtractNameFromPath(string path)
+    {
+        // Try to extract VID/PID for a minimal identifier
+        int vidIdx = path.IndexOf("VID_", StringComparison.OrdinalIgnoreCase);
+        int pidIdx = path.IndexOf("PID_", StringComparison.OrdinalIgnoreCase);
+        if (vidIdx >= 0 && pidIdx >= 0)
+        {
+            string vid = path.Substring(vidIdx + 4, Math.Min(4, path.Length - vidIdx - 4)).Split('&')[0];
+            string pid = path.Substring(pidIdx + 4, Math.Min(4, path.Length - pidIdx - 4)).Split('&')[0];
+            return $"HID Device (VID_{vid}&PID_{pid})";
+        }
+        return "Unknown HID Device";
+    }
+
+    /// <summary>
+    /// Attempts to find an SDL joystick whose name matches the given device name.
+    /// Returns the SDL joystick index, or -1 if no match is found.
+    /// </summary>
+    private int TryMatchSdlJoystick(string name)
+    {
+        if (_sdl == null) return -1;
+        _sdl.JoystickUpdate();
+        int count = _sdl.NumJoysticks();
+        for (int i = 0; i < count; i++)
+        {
+            string sdlName = _sdl.JoystickNameForIndexS(i) ?? "";
+            if (string.IsNullOrEmpty(sdlName)) continue;
+            if (name.Equals(sdlName, StringComparison.OrdinalIgnoreCase) ||
+                name.Contains(sdlName, StringComparison.OrdinalIgnoreCase) ||
+                sdlName.Contains(name, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+        return -1;
     }
 
     /// <summary>
@@ -331,8 +387,8 @@ public unsafe class InputManager : IDisposable
 
     /// <summary>
     /// Opens a device selected from the combined device list (by list index).
-    /// If the device is an SDL joystick, opens it directly.
-    /// If it's a winmm-only device, attempts to match it to an SDL joystick by name.
+    /// If the device has an SDL joystick match, opens it directly.
+    /// Otherwise, attempts to match it to an SDL joystick by name.
     /// </summary>
     public void OpenDeviceByListIndex(int listIndex)
     {
@@ -345,7 +401,7 @@ public unsafe class InputManager : IDisposable
         }
         else
         {
-            // winmm-only device — try to find a matching SDL joystick by name substring
+            // Non-SDL device — try to find a matching SDL joystick by name substring
             if (_sdl != null)
             {
                 _sdl.JoystickUpdate();
@@ -356,7 +412,7 @@ public unsafe class InputManager : IDisposable
                     if (entry.Name.Contains(sdlName, StringComparison.OrdinalIgnoreCase) ||
                         sdlName.Contains(entry.Name, StringComparison.OrdinalIgnoreCase))
                     {
-                        Debug.WriteLine($"[InputManager] Matched winmm device '{entry.Name}' to SDL [{i}] '{sdlName}'");
+                        Debug.WriteLine($"[InputManager] Matched device '{entry.Name}' to SDL [{i}] '{sdlName}'");
                         OpenController(i);
                         return;
                     }
@@ -364,7 +420,7 @@ public unsafe class InputManager : IDisposable
             }
 
             // Could not match to SDL — report as not openable but show correct name
-            Debug.WriteLine($"[InputManager] Device '{entry.Name}' (winmm ID={entry.WinmmId}) has no SDL joystick match");
+            Debug.WriteLine($"[InputManager] Device '{entry.Name}' has no SDL joystick match");
             ControllerInfo.Name = $"{entry.Name} (no joystick driver)";
             ControllerInfo.IsConnected = false;
             ControllerInfo.AxisCount = 0;
