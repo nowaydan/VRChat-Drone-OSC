@@ -2,5 +2,202 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{StaticResource BgMediumBrush}">
-    <TextBlock Text="Profiles — coming soon" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.ColumnDefinitions>
+            <!-- Left: profile list -->
+            <ColumnDefinition Width="220"/>
+            <!-- Right: summary -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ── Left panel: profile list ── -->
+        <Grid Grid.Column="0" Margin="0,0,10,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Background="{StaticResource BgPanelBrush}"
+                    CornerRadius="4"
+                    Padding="0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding ProfileNames}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border x:Name="ItemBd"
+                                        Padding="12,8"
+                                        Cursor="Hand"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding DataContext.SwitchProfileCommand,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                      CommandParameter="{Binding}"/>
+                                    </Border.InputBindings>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding}"
+                                                   VerticalAlignment="Center"/>
+
+                                        <!-- Active indicator -->
+                                        <TextBlock Grid.Column="1"
+                                                   Text="ACTIVE"
+                                                   FontSize="9"
+                                                   Foreground="{StaticResource AccentBrush}"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding}" Value="{Binding DataContext.ActiveProfileName,
+                                                            RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding}" Value="{Binding DataContext.SelectedProfileName,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                    <Setter Property="Background" Value="{StaticResource BgMediumBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Inline new-profile name entry -->
+            <Border Grid.Row="1"
+                    Margin="0,8,0,0"
+                    Visibility="{Binding IsNamingNewProfile, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="New profile name:" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <Button Content="Create"
+                                Style="{StaticResource AccentButton}"
+                                Padding="12,4"
+                                Margin="0,0,6,0"
+                                Command="{Binding ConfirmNewProfileCommand}"/>
+                        <Button Content="Cancel"
+                                Padding="12,4"
+                                Command="{Binding CancelNewProfileCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Bottom action buttons — hidden while naming -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsNamingNewProfile}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <Button Content="New"
+                        Padding="12,5"
+                        Margin="0,0,6,0"
+                        Command="{Binding BeginNewProfileCommand}"/>
+                <Button Content="Duplicate"
+                        Padding="12,5"
+                        Margin="0,0,6,0"
+                        Command="{Binding DuplicateProfileCommand}"/>
+                <Button Content="Delete"
+                        Padding="12,5"
+                        Foreground="{StaticResource DangerBrush}"
+                        Command="{Binding DeleteProfileCommand}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ── Right panel: profile summary ── -->
+        <Border Grid.Column="1"
+                Background="{StaticResource BgPanelBrush}"
+                CornerRadius="4"
+                Padding="16">
+            <StackPanel>
+                <TextBlock Text="{Binding SelectedProfileName}"
+                           FontSize="16" FontWeight="SemiBold"
+                           Margin="0,0,0,16"/>
+
+                <!-- Rates summary -->
+                <TextBlock Text="RATES" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,8"/>
+
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Pitch"
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SummaryPitch}" FontSize="12"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Roll"
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SummaryRoll}" FontSize="12"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Yaw"
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SummaryYaw}" FontSize="12"/>
+                </Grid>
+
+                <!-- Physics summary -->
+                <TextBlock Text="PHYSICS" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,8"/>
+                <TextBlock Text="{Binding SummaryPhysics}" FontSize="12" Margin="0,0,0,16"/>
+
+                <!-- Bindings count -->
+                <TextBlock Text="CONTROLLER BINDINGS" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,8"/>
+                <TextBlock FontSize="12">
+                    <Run Text="{Binding SummaryBindingCount}"/>
+                    <Run Text=" binding(s) configured"/>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+    </Grid>
 </UserControl>
