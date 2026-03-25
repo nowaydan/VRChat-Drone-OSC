@@ -32,7 +32,7 @@
 
             <!-- ── Title bar ── -->
             <Grid Grid.Row="0"
-                  Background="#FF121226"
+                  Background="#FF1E2A45"
                   MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <TextBlock Text="VRCDroneOSC"
                            VerticalAlignment="Center"
