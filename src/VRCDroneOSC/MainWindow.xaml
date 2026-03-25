@@ -8,13 +8,13 @@
         AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanResize">
+        ResizeMode="NoResize">
 
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="0"
                       CornerRadius="12"
                       CaptionHeight="0"
-                      ResizeBorderThickness="6"/>
+                      ResizeBorderThickness="0"/>
     </WindowChrome.WindowChrome>
 
     <Border CornerRadius="12"
