@@ -18,7 +18,7 @@
                     <ItemsControl.Items>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneThrottle" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -27,7 +27,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePitch" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -36,7 +36,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneRoll" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -45,7 +45,7 @@
                         </Border>
                         <Border Padding="12,10">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneYaw" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -65,7 +65,7 @@
                     <ItemsControl.Items>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/ToggleDrone" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -74,7 +74,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/ToggleDroneCamera" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -83,7 +83,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/ColliderToggle" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -92,7 +92,7 @@
                         </Border>
                         <Border Padding="12,10">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneReset" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -112,7 +112,7 @@
                     <ItemsControl.Items>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamAngle" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -121,7 +121,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamFOV" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -130,7 +130,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamRoll" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -139,7 +139,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamVRDist" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -148,7 +148,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamVRSize" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -157,7 +157,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamAnalogToggle" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -166,7 +166,7 @@
                         </Border>
                         <Border Padding="12,10">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCameraChannel" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="int" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -189,7 +189,7 @@
                     <ItemsControl.Items>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/Mass" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -198,7 +198,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/Drag" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -207,7 +207,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/Gravity" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -216,7 +216,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/ThrottleSpeed" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -225,7 +225,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/PitchSpeed" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -234,7 +234,7 @@
                         </Border>
                         <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/RollSpeed" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
@@ -243,7 +243,7 @@
                         </Border>
                         <Border Padding="12,10">
                             <Grid><Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="320"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/YawSpeed" FontFamily="Consolas" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
