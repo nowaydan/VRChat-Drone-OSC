@@ -17,18 +17,8 @@ public class OscTransport : IDisposable
     private readonly object _lock = new();
     private readonly Dictionary<string, object> _pendingValues = new();
     private bool _connected;
-    private bool _physicsInitSent;
-
-    private static readonly Dictionary<string, float> NeutralPhysicsParams = new()
-    {
-        ["/avatar/parameters/DronePhysics/Mass"] = 0.0000001f,
-        ["/avatar/parameters/DronePhysics/Drag"] = 0f,
-        ["/avatar/parameters/DronePhysics/Gravity"] = 0f,
-        ["/avatar/parameters/DronePhysics/ThrottleSpeed"] = 1f,
-        ["/avatar/parameters/DronePhysics/PitchSpeed"] = 1f,
-        ["/avatar/parameters/DronePhysics/RollSpeed"] = 1f,
-        ["/avatar/parameters/DronePhysics/YawSpeed"] = 1f,
-    };
+    // DronePhysics/* parameters are controlled by the avatar's radial menu in-game.
+    // The OSC app should NOT override them on startup.
 
     public bool IsConnected => _connected;
     public string? ConnectionError { get; private set; }
@@ -89,13 +79,6 @@ public class OscTransport : IDisposable
     private void SendPending(object? state)
     {
         if (!_connected || _client == null) return;
-
-        if (!_physicsInitSent)
-        {
-            foreach (var (address, value) in NeutralPhysicsParams)
-                SendOscFloat(address, value);
-            _physicsInitSent = true;
-        }
 
         Dictionary<string, object> snapshot;
         lock (_lock)

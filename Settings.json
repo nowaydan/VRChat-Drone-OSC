@@ -1,6 +1,6 @@
 {
-  "controllerName": "",
-  "lastOpenedPage": 0,
+  "controllerName": "Radiomaster Pocket Joystick",
+  "lastOpenedPage": 2,
   "activeProfile": "Default",
   "profiles": {
     "Default": {
@@ -10,18 +10,18 @@
       },
       "pitchRate": {
         "center": 200,
-        "maxRate": 0,
-        "expo": 0
+        "maxRate": 700,
+        "expo": 0.5
       },
       "rollRate": {
-        "center": 0,
-        "maxRate": 0,
-        "expo": 0
+        "center": 200,
+        "maxRate": 700,
+        "expo": 0.5
       },
       "yawRate": {
-        "center": 0,
-        "maxRate": 0,
-        "expo": 0
+        "center": 200,
+        "maxRate": 700,
+        "expo": 0.5
       },
       "physics": {
         "mass": 0.5,
@@ -31,7 +31,64 @@
         "hoverThrottle": 0.5,
         "thrustMultiplier": 1
       },
-      "controllerBindings": []
+      "controllerBindings": [
+        {
+          "guid": "b1000001-0000-0000-0000-000000000001",
+          "displayName": "Throttle",
+          "parameterAddress": "/avatar/parameters/DroneThrottle",
+          "controls": [
+            {
+              "guid": "c1000001-0000-0000-0000-000000000001",
+              "joystickOffset": 2,
+              "sdlAxis": 2,
+              "normalizeMethod": "zeroToOne",
+              "behavior": "continuous"
+            }
+          ]
+        },
+        {
+          "guid": "b1000002-0000-0000-0000-000000000002",
+          "displayName": "Pitch",
+          "parameterAddress": "/avatar/parameters/DronePitch",
+          "controls": [
+            {
+              "guid": "c1000002-0000-0000-0000-000000000002",
+              "joystickOffset": 1,
+              "sdlAxis": 1,
+              "normalizeMethod": "none",
+              "behavior": "continuous"
+            }
+          ]
+        },
+        {
+          "guid": "b1000003-0000-0000-0000-000000000003",
+          "displayName": "Yaw",
+          "parameterAddress": "/avatar/parameters/DroneYaw",
+          "controls": [
+            {
+              "guid": "c1000003-0000-0000-0000-000000000003",
+              "joystickOffset": 3,
+              "sdlAxis": 3,
+              "normalizeMethod": "none",
+              "behavior": "continuous"
+            }
+          ]
+        },
+        {
+          "guid": "b1000004-0000-0000-0000-000000000004",
+          "displayName": "Roll",
+          "parameterAddress": "/avatar/parameters/DroneRoll",
+          "controls": [
+            {
+              "guid": "c1000004-0000-0000-0000-000000000004",
+              "joystickOffset": 0,
+              "sdlAxis": 0,
+              "normalizeMethod": "none",
+              "behavior": "continuous"
+            }
+          ]
+        }
+      ]
     }
   }
 }
