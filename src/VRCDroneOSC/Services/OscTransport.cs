@@ -48,7 +48,6 @@ public class OscTransport : IDisposable
             _client.Connect(_host, _port);
             _connected = true;
             ConnectionError = null;
-            _physicsInitSent = false;
             ConnectionChanged?.Invoke(true);
             _sendTimer ??= new Timer(SendPending, null, 0, 16);
         }
