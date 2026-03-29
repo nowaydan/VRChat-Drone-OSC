@@ -29,7 +29,9 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        _configService = new ConfigService("Settings.json");
+        // Save Settings.json next to the exe so it persists regardless of working directory
+        var exeDir = AppContext.BaseDirectory;
+        _configService = new ConfigService(System.IO.Path.Combine(exeDir, "Settings.json"));
         // Initialise backing fields directly — required before source-generated
         // properties are observable; avoids MVVMTK0034 in property accessors below.
 #pragma warning disable MVVMTK0034
