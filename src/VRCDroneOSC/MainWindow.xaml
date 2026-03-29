@@ -73,6 +73,7 @@
                     <TabItem Header="Controller"><views:ControllerView/></TabItem>
                     <TabItem Header="Profiles"><views:ProfilesView/></TabItem>
                     <TabItem Header="Simulator"><views:SimulatorView/></TabItem>
+                    <TabItem Header="Parameters"><views:ParametersView/></TabItem>
                 </TabControl>
             </Grid>
         </Grid>

@@ -1,0 +1,259 @@
+<UserControl x:Class="VRCDroneOSC.Views.ParametersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource BgMediumBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0">
+        <StackPanel Margin="16">
+
+            <TextBlock Text="Avatar Parameters Reference"
+                       FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+            <!-- Flight Controls -->
+            <TextBlock Text="FLIGHT CONTROLS" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+
+            <Border Background="{StaticResource BgPanelBrush}" CornerRadius="4" Padding="0" Margin="0,0,0,16">
+                <ItemsControl>
+                    <ItemsControl.Items>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneThrottle" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Vertical thrust (0 = no power, 1 = full throttle). ~50% is hover." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePitch" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Forward/backward tilt (-1 = full back, 0 = level, 1 = full forward)." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneRoll" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Left/right tilt (-1 = full left, 0 = level, 1 = full right)." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneYaw" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Rotation left/right (-1 = full left, 0 = none, 1 = full right)." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                    </ItemsControl.Items>
+                </ItemsControl>
+            </Border>
+
+            <!-- Toggles -->
+            <TextBlock Text="TOGGLES" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+
+            <Border Background="{StaticResource BgPanelBrush}" CornerRadius="4" Padding="0" Margin="0,0,0,16">
+                <ItemsControl>
+                    <ItemsControl.Items>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/ToggleDrone" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Powers the drone on/off. Must be enabled before flight controls work." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/ToggleDroneCamera" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Enables/disables the FPV camera overlay on the drone." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/ColliderToggle" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Enables/disables the drone's collision detection." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneReset" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Resets the drone position back to the avatar (local only, not synced)." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                    </ItemsControl.Items>
+                </ItemsControl>
+            </Border>
+
+            <!-- Camera Settings -->
+            <TextBlock Text="CAMERA SETTINGS" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+
+            <Border Background="{StaticResource BgPanelBrush}" CornerRadius="4" Padding="0" Margin="0,0,0,16">
+                <ItemsControl>
+                    <ItemsControl.Items>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamAngle" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="FPV camera tilt angle. Adjust for different viewing angles during flight." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamFOV" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Camera field of view. Higher = wider angle, lower = zoomed in." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamRoll" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Camera roll rotation for tilted horizon effects." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamVRDist" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Distance of the FPV overlay from the viewer in VR." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamVRSize" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Size of the FPV overlay screen in VR." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCamAnalogToggle" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="bool" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Toggles the analog TV/glitch visual effects on the FPV feed." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DroneCameraChannel" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="int" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Selects camera radio channel (1-8). Each channel shows a different texture feed." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                    </ItemsControl.Items>
+                </ItemsControl>
+            </Border>
+
+            <!-- Physics (Local Only) -->
+            <TextBlock Text="PHYSICS (LOCAL ONLY — NOT SYNCED)" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+
+            <TextBlock Text="These parameters are handled by the OSC app's physics engine. They are sent once on startup to neutralize avatar-side physics."
+                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+            <Border Background="{StaticResource BgPanelBrush}" CornerRadius="4" Padding="0" Margin="0,0,0,16">
+                <ItemsControl>
+                    <ItemsControl.Items>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/Mass" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Drone mass. Set to ~0 by app to disable avatar-side mass." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/Drag" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Linear drag coefficient. Set to 0 by app (physics engine handles drag)." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/Gravity" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Gravity damper strength. Set to 0 by app (physics engine handles gravity)." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/ThrottleSpeed" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Throttle response speed multiplier. Set to 1.0 (passthrough) by app." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/PitchSpeed" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Pitch rotation speed multiplier. Set to 1.0 (passthrough) by app." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/RollSpeed" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Roll rotation speed multiplier. Set to 1.0 (passthrough) by app." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                        <Border Padding="12,10">
+                            <Grid><Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="240"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="/avatar/parameters/DronePhysics/YawSpeed" FontFamily="Consolas" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="float" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                <TextBlock Grid.Column="2" Text="Yaw rotation speed multiplier. Set to 1.0 (passthrough) by app." TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                    </ItemsControl.Items>
+                </ItemsControl>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
